@@ -1,0 +1,77 @@
+#!/usr/bin/python3
+
+import unittest
+
+class Demo():
+    READ_FILE_PATH= '/Users/amit/Desktop/output.txt'
+    WRITE_FILE_PATH= '/Users/amit/Desktop/input.txt'
+  
+class Twaice_arb(str):
+    def __init__(self, rm):
+        rm = self.valid_data(rm)
+        keys = ['IV', 'IX', 'XL', 'XC', 'CD', 'CM', 'I', 'V', 'X', 'L', 'C', 'D', 'M']
+        to_arb = {'IV': '4', 'IX': '9', 'XL': '40', 'XC': '90', 'CD': '400', 'CM': '900',
+                'I': '1', 'V': '5', 'X': '10', 'L': '50', 'C': '100', 'D': '500', 'M': '1000'}
+        for k in keys:
+            if k in rm:
+                rm = rm.replace(k, ' {}'.format(to_arb.get(k)))
+        self.arb = sum(int(num) for num in rm.split())
+
+    def valid_data(self, rm):
+        rm = rm.upper()
+        invalid = ['IIII', 'VV', 'XXXX', 'LL', 'CCCC', 'DD', 'MMMM']
+        if any(sub in rm for sub in invalid):
+            raise ValueError('Numerv√∫us invalidus est: {}'.format(rm))
+        return rm
+    
+    #Assumpation: Total data size is less than available RAM in the machine
+    #based on the scalability, if we have billions of records 
+    #then we need to write data in multiple machine depends on the RAM and will have to make parallel computing
+
+#This method will accept a file Input if not present will take from the path
+#Ideally from a Web interface in S3 bucket or from temp. file, in case of million records it will be dynamic
+
+def read_from_file(read_path=None):
+    path= read_path if read_path!= None else (Demo.READ_FILE_PATH)
+    with open(path, 'r') as fp:
+        contect = fp.readlines()
+        contect = [x.strip() for x in contect] 
+        fp.close
+        return contect
+
+
+def mapping(numr):
+    num = Twaice_arb(numr)
+    return num.arb
+
+
+def write_to_a_file(numr):
+    with open(Demo.WRITE_FILE_PATH, 'w') as the_file:
+        for numr in numr:
+            num= mapping(numr)
+            the_file.write(str(num))
+            the_file.write('\n')
+            the_file.close
+
+a= read_from_file()
+b= write_to_a_file(a)
+
+class TestrmConversion(unittest.TestCase):
+    def setUp(self):
+        self.numrs = [(1, 'I'), (3, 'III'), (4, 'IV'), (27, 'XXVII'), (44, 'XLIV'),
+                (93, 'XCIII'), (141, 'CXLI'), (402, 'CDII'), (575, 'DLXXV'),
+                (1024, 'MXXIV'), (3000, 'MMM')]
+
+    def test_to_9(self):
+        for num in self.numrs:
+            self.assertEqual(9, mapping('IX'))
+    def test_to_3999(self):
+        for num in self.numrs:
+            self.assertEqual(3999, mapping('MMMCMXCIX'))
+
+    def test_for_list(self):
+        for num in self.numrs:
+            self.assertEqual(num[0], mapping(num[1]))
+
+if __name__ == '__main__':
+    unittest.main()
